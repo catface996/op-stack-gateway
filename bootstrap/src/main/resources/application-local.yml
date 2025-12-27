@@ -6,13 +6,13 @@ gateway:
     enabled: false  # Set to true to enable JWT authentication
   services:
     op-stack-service:
-      url: http://localhost:8080
+      url: http://localhost:8081
     op-stack-executor:
-      url: http://localhost:7070
+      url: http://localhost:8082
     op-stack-tools:
-      url: http://localhost:6060
+      url: http://localhost:8083
     op-stack-auth:
-      url: http://localhost:9090
+      url: http://localhost:8084
 
 spring:
   cloud:
