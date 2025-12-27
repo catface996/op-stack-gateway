@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: op-stack-gateway Error Response Contract
+  description: |
+    Defines the standard error response format for all gateway errors.
+    All error responses from the gateway follow this consistent format.
+  version: 1.0.0
+
+components:
+  schemas:
+    GatewayErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - path
+        - timestamp
+      properties:
+        code:
+          type: string
+          description: Error code identifying the type of error
+          enum:
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - SERVICE_UNAVAILABLE
+            - BAD_GATEWAY
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+        path:
+          type: string
+          description: Request path that caused the error
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the error occurred
+        requestId:
+          type: string
+          description: Optional request ID for tracing
+          nullable: true
+
+  responses:
+    Unauthorized:
+      description: |
+        Authentication failed. Possible reasons:
+        - Missing Authorization header
+        - Invalid JWT token format
+        - Expired JWT token
+        - Invalid JWT token signature
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayErrorResponse'
+          examples:
+            missing_token:
+              summary: Missing Authorization header
+              value:
+                code: "UNAUTHORIZED"
+                message: "Authorization header is required"
+                path: "/api/service/users"
+                timestamp: "2025-12-27T10:00:00Z"
+            invalid_token:
+              summary: Invalid token
+              value:
+                code: "UNAUTHORIZED"
+                message: "Invalid or expired token"
+                path: "/api/service/users"
+                timestamp: "2025-12-27T10:00:00Z"
+            expired_token:
+              summary: Expired token
+              value:
+                code: "UNAUTHORIZED"
+                message: "Token has expired"
+                path: "/api/service/users"
+                timestamp: "2025-12-27T10:00:00Z"
+
+    Forbidden:
+      description: |
+        Token is valid but user lacks permission for this resource.
+        (Reserved for future authorization extension)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayErrorResponse'
+          example:
+            code: "FORBIDDEN"
+            message: "Insufficient permissions"
+            path: "/api/service/admin"
+            timestamp: "2025-12-27T10:00:00Z"
+
+    NotFound:
+      description: |
+        No route matches the request path.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayErrorResponse'
+          example:
+            code: "NOT_FOUND"
+            message: "No route found for path"
+            path: "/api/unknown/endpoint"
+            timestamp: "2025-12-27T10:00:00Z"
+
+    ServiceUnavailable:
+      description: |
+        Backend service is unavailable. Possible reasons:
+        - Backend service is down
+        - Connection timeout
+        - Auth service unavailable during token validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayErrorResponse'
+          examples:
+            backend_down:
+              summary: Backend service down
+              value:
+                code: "SERVICE_UNAVAILABLE"
+                message: "Backend service is temporarily unavailable"
+                path: "/api/service/users"
+                timestamp: "2025-12-27T10:00:00Z"
+            auth_service_down:
+              summary: Auth service unavailable
+              value:
+                code: "SERVICE_UNAVAILABLE"
+                message: "Authentication service is temporarily unavailable"
+                path: "/api/service/users"
+                timestamp: "2025-12-27T10:00:00Z"
+
+    BadGateway:
+      description: |
+        Backend service returned an invalid response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayErrorResponse'
+          example:
+            code: "BAD_GATEWAY"
+            message: "Invalid response from backend service"
+            path: "/api/service/users"
+            timestamp: "2025-12-27T10:00:00Z"
+
+    InternalError:
+      description: |
+        Unexpected error in the gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayErrorResponse'
+          example:
+            code: "INTERNAL_ERROR"
+            message: "An unexpected error occurred"
+            path: "/api/service/users"
+            timestamp: "2025-12-27T10:00:00Z"
+
+# HTTP Status Code Mapping
+# ========================
+# UNAUTHORIZED -> 401
+# FORBIDDEN -> 403
+# NOT_FOUND -> 404
+# SERVICE_UNAVAILABLE -> 503
+# BAD_GATEWAY -> 502
+# INTERNAL_ERROR -> 500

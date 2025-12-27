@@ -1,0 +1,84 @@
+# Production profile
+# Backend service URLs from environment variables
+
+gateway:
+  services:
+    op-stack-service:
+      url: ${OP_STACK_SERVICE_URL:http://op-stack-service:8080}
+    op-stack-executor:
+      url: ${OP_STACK_EXECUTOR_URL:http://op-stack-executor:8080}
+    op-stack-tools:
+      url: ${OP_STACK_TOOLS_URL:http://op-stack-tools:8080}
+    op-stack-auth:
+      url: ${OP_STACK_AUTH_URL:http://op-stack-auth:8080}
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # Public Routes (No Authentication Required)
+        - id: auth-public-register
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/register
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+
+        - id: auth-public-login
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/login
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+
+        # Protected Routes (Authentication Required)
+        - id: op-stack-service
+          uri: ${gateway.services.op-stack-service.url}
+          predicates:
+            - Path=/api/service/**
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: false
+            service: op-stack-service
+
+        - id: op-stack-executor
+          uri: ${gateway.services.op-stack-executor.url}
+          predicates:
+            - Path=/api/executor/**
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: false
+            service: op-stack-executor
+
+        - id: op-stack-tools
+          uri: ${gateway.services.op-stack-tools.url}
+          predicates:
+            - Path=/api/tools/**
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: false
+            service: op-stack-tools
+
+        - id: op-stack-auth-protected
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: false
+            service: op-stack-auth
+
+logging:
+  level:
+    root: WARN
+    com.catface996.gateway: INFO
