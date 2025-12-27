@@ -1,0 +1,64 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: op-stack-gateway
+  profiles:
+    active: local
+  main:
+    web-application-type: reactive
+  cloud:
+    # Disable compatibility verifier (Spring Boot 3.4.1 with Spring Cloud 2025.0.0)
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      # Global default filters applied to all routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+
+# Gateway configuration
+gateway:
+  # Auth service configuration
+  auth:
+    enabled: false  # Set to true to enable JWT authentication
+    validate-endpoint: /auth/validate
+  # WebClient configuration
+  webclient:
+    connect-timeout-ms: 5000
+    response-timeout-ms: 10000
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.catface996.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      access: unrestricted
+
+# SpringDoc OpenAPI configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    urls-primary-name: op-stack-service
+    # Show all operations expanded
+    doc-expansion: list
+    # Sort operations by method
+    operations-sorter: method
+    # Enable deep linking
+    deep-linking: true

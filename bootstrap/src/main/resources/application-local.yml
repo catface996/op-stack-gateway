@@ -1,0 +1,121 @@
+# Local development profile
+# Backend service URLs for local development
+
+gateway:
+  auth:
+    enabled: false  # Set to true to enable JWT authentication
+  services:
+    op-stack-service:
+      url: http://localhost:8080
+    op-stack-executor:
+      url: http://localhost:7070
+    op-stack-tools:
+      url: http://localhost:6060
+    op-stack-auth:
+      url: http://localhost:8084
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # API Documentation Routes (Proxy to avoid CORS issues)
+        # SwaggerServersRewrite filter rewrites 'servers' field to point to gateway
+        - id: docs-service
+          uri: ${gateway.services.op-stack-service.url}
+          predicates:
+            - Path=/docs/service/**
+          filters:
+            - RewritePath=/docs/service/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        - id: docs-executor
+          uri: ${gateway.services.op-stack-executor.url}
+          predicates:
+            - Path=/docs/executor/**
+          filters:
+            - RewritePath=/docs/executor/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        - id: docs-tools
+          uri: ${gateway.services.op-stack-tools.url}
+          predicates:
+            - Path=/docs/tools/**
+          filters:
+            - RewritePath=/docs/tools/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        - id: docs-auth
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/docs/auth/**
+          filters:
+            - RewritePath=/docs/auth/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        # Public Routes (No Authentication Required)
+        - id: auth-public-register
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/register
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+
+        - id: auth-public-login
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/login
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+
+        # Protected Routes (Authentication Required)
+        # Note: No StripPrefix - backend services expect full path with /api prefix
+        - id: op-stack-service
+          uri: ${gateway.services.op-stack-service.url}
+          predicates:
+            - Path=/api/service/**
+          metadata:
+            public: false
+            service: op-stack-service
+
+        - id: op-stack-executor
+          uri: ${gateway.services.op-stack-executor.url}
+          predicates:
+            - Path=/api/executor/**
+          metadata:
+            public: false
+            service: op-stack-executor
+
+        - id: op-stack-tools
+          uri: ${gateway.services.op-stack-tools.url}
+          predicates:
+            - Path=/api/tools/**
+          metadata:
+            public: false
+            service: op-stack-tools
+
+        - id: op-stack-auth-protected
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/**
+          metadata:
+            public: false
+            service: op-stack-auth
+
+logging:
+  level:
+    root: INFO
+    com.catface996.gateway: DEBUG

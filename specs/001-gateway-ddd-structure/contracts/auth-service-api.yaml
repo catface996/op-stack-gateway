@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: op-stack-auth Token Validation API
+  description: |
+    API contract for JWT token validation between op-stack-gateway and op-stack-auth service.
+    This defines the expected request/response format for the gateway to validate tokens.
+  version: 1.0.0
+  contact:
+    name: op-stack Team
+
+servers:
+  - url: http://localhost:8084
+    description: Local development
+  - url: ${OP_STACK_AUTH_URL}
+    description: Environment-configured URL
+
+paths:
+  /auth/validate:
+    post:
+      operationId: validateToken
+      summary: Validate JWT Token
+      description: |
+        Validates a JWT token and returns the associated userId if valid.
+        This endpoint is called by the gateway for every authenticated request.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenValidationRequest'
+            example:
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      responses:
+        '200':
+          description: Token validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenValidationResponse'
+              examples:
+                valid:
+                  summary: Valid token
+                  value:
+                    valid: true
+                    userId: 12345
+                    code: "SUCCESS"
+                    message: "Token is valid"
+                expired:
+                  summary: Expired token
+                  value:
+                    valid: false
+                    userId: null
+                    code: "TOKEN_EXPIRED"
+                    message: "Token has expired"
+                invalid:
+                  summary: Invalid token
+                  value:
+                    valid: false
+                    userId: null
+                    code: "INVALID_TOKEN"
+                    message: "Token signature is invalid"
+        '400':
+          description: Bad request (malformed request body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TokenValidationRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: JWT token to validate (without Bearer prefix)
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    TokenValidationResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether the token is valid
+        userId:
+          type: integer
+          format: int64
+          nullable: true
+          description: User ID associated with the token (null if invalid)
+        code:
+          type: string
+          description: Result code
+          enum:
+            - SUCCESS
+            - TOKEN_EXPIRED
+            - INVALID_TOKEN
+            - TOKEN_REVOKED
+            - USER_DISABLED
+        message:
+          type: string
+          description: Human-readable message
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+
+  securitySchemes:
+    # Note: This endpoint itself doesn't require authentication
+    # It's an internal service-to-service call
+    InternalService:
+      type: apiKey
+      in: header
+      name: X-Internal-Service
+      description: Optional header to identify calling service
+
+# Performance requirements (from spec)
+# - Response time: ≤50ms for 95th percentile
+# - Availability: 99.9% uptime
+# - No caching on gateway side (validated per request)

@@ -1,0 +1,124 @@
+# Spring Cloud Gateway Route Configuration
+# This defines the routing contracts between the gateway and backend services
+
+spring:
+  cloud:
+    gateway:
+      # Global default filters applied to all routes
+      default-filters:
+        - name: AccessLog
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+
+      routes:
+        # ============================================================
+        # Public Routes (No Authentication Required)
+        # ============================================================
+
+        - id: auth-public-register
+          uri: ${OP_STACK_AUTH_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/auth/register
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+            description: "User registration endpoint"
+
+        - id: auth-public-login
+          uri: ${OP_STACK_AUTH_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/auth/login
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+            description: "User login endpoint"
+
+        # ============================================================
+        # Protected Routes (Authentication Required)
+        # ============================================================
+
+        - id: op-stack-service
+          uri: ${OP_STACK_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/service/**
+            - Method=POST
+          filters:
+            - StripPrefix=1
+            - name: Authentication
+            - name: OperatorIdInjection
+            - RemoveRequestHeader=Authorization
+          metadata:
+            public: false
+            service: "op-stack-service"
+            description: "Main service API routes"
+
+        - id: op-stack-executor
+          uri: ${OP_STACK_EXECUTOR_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/executor/**
+            - Method=POST
+          filters:
+            - StripPrefix=1
+            - name: Authentication
+            - name: OperatorIdInjection
+            - RemoveRequestHeader=Authorization
+          metadata:
+            public: false
+            service: "op-stack-executor"
+            description: "Executor service API routes"
+
+        - id: op-stack-tools
+          uri: ${OP_STACK_TOOLS_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/tools/**
+            - Method=POST
+          filters:
+            - StripPrefix=1
+            - name: Authentication
+            - name: OperatorIdInjection
+            - RemoveRequestHeader=Authorization
+          metadata:
+            public: false
+            service: "op-stack-tools"
+            description: "Tools service API routes"
+
+        - id: op-stack-auth-protected
+          uri: ${OP_STACK_AUTH_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/auth/**
+            - Method=POST
+          filters:
+            - StripPrefix=1
+            - name: Authentication
+            - name: OperatorIdInjection
+            - RemoveRequestHeader=Authorization
+          metadata:
+            public: false
+            service: "op-stack-auth"
+            description: "Auth service protected API routes (e.g., logout, profile)"
+          # Note: This route has lower priority than public auth routes due to ordering
+
+# ============================================================
+# Route Processing Order
+# ============================================================
+# Routes are matched in order of specificity:
+# 1. /api/auth/register (public) - most specific
+# 2. /api/auth/login (public) - most specific
+# 3. /api/auth/** (protected) - catch-all for auth
+# 4. /api/service/** (protected)
+# 5. /api/executor/** (protected)
+# 6. /api/tools/** (protected)
+
+# ============================================================
+# Filter Execution Order
+# ============================================================
+# 1. AccessLog (pre) - Start timing
+# 2. Authentication - Validate JWT token
+# 3. OperatorIdInjection - Add operatorId to body
+# 4. RemoveRequestHeader - Strip Authorization header
+# 5. StripPrefix - Remove /api prefix
+# 6. [Route to backend]
+# 7. AccessLog (post) - Log response
