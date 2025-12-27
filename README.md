@@ -2,6 +2,10 @@
 
 Spring Cloud Gateway with DDD architecture for proxying HTTP requests to op-stack backend services.
 
+## Architecture
+
+![Op-Stack Gateway Architecture](doc/images/op-stack-gateway-architecture.png)
+
 ## Features
 
 - **HTTP Reverse Proxy**: Routes requests to op-stack-service, op-stack-executor, op-stack-tools, op-stack-auth
