@@ -1,50 +1,45 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Op-Stack Gateway Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. DDD Architecture
+项目采用领域驱动设计(DDD)多模块架构，模块职责清晰分离：
+- bootstrap: 应用入口、配置
+- application: 应用服务、DTO
+- domain: 领域模型、领域服务
+- infrastructure: 网关过滤器、HTTP客户端
+- interface: 管理端点
+- common: 共享常量、工具类
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Gateway-Only Responsibility
+网关只负责请求路由转发，不实现业务逻辑。认证、授权等功能委托给后端服务处理。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Configuration-Driven
+路由配置、服务地址等通过配置文件管理，支持多环境配置（local、prod）。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+## Port Configuration (NON-NEGOTIABLE)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### 开发环境端口规范
+**开发环境(local profile)端口配置固定，禁止修改：**
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| op-stack-gateway | 8080 | API网关 |
+| op-stack-service | 8081 | 主服务 |
+| op-stack-executor | 8082 | 执行器服务 |
+| op-stack-tools | 8083 | 工具服务 |
+| op-stack-auth | 8084 | 认证服务 |
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**注意**: 其他环境（如prod）端口配置不受此约束，可根据部署需求调整。
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Swagger Documentation
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+网关聚合所有后端服务的Swagger文档，通过代理路由避免CORS问题，并重写servers配置确保请求通过网关转发。
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- 宪法规则优先于其他实践
+- 修改宪法需要充分的理由和文档记录
+- 所有代码变更必须符合宪法规定
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-12-28 | **Last Amended**: 2025-12-28
