@@ -13,6 +13,11 @@
 
     <artifactId>bootstrap</artifactId>
     <name>bootstrap</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <finalName>op-stack-gateway-${project.version}</finalName>
+    </properties>
     <description>Bootstrap module - Application entry point and configuration</description>
 
     <dependencies>
@@ -71,6 +76,7 @@
     </dependencies>
 
     <build>
+        <finalName>${finalName}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
