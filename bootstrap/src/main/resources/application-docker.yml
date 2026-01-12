@@ -1,0 +1,128 @@
+# Docker Environment Configuration
+# 容器化部署环境配置
+
+server:
+  port: 8080
+
+gateway:
+  auth:
+    enabled: ${GATEWAY_AUTH_ENABLED:false}
+  services:
+    op-stack-service:
+      url: ${SERVICE_URL:http://service:8081}
+    op-stack-executor:
+      url: ${EXECUTOR_URL:http://executor:8080}
+    op-stack-tools:
+      url: ${TOOLS_URL:http://tools:6060}
+    op-stack-auth:
+      url: ${AUTH_URL:http://auth:8084}
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # API Documentation Routes
+        - id: docs-service
+          uri: ${gateway.services.op-stack-service.url}
+          predicates:
+            - Path=/docs/service/**
+          filters:
+            - RewritePath=/docs/service/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        - id: docs-executor
+          uri: ${gateway.services.op-stack-executor.url}
+          predicates:
+            - Path=/docs/executor/**
+          filters:
+            - RewritePath=/docs/executor/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        - id: docs-tools
+          uri: ${gateway.services.op-stack-tools.url}
+          predicates:
+            - Path=/docs/tools/**
+          filters:
+            - RewritePath=/docs/tools/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        - id: docs-auth
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/docs/auth/**
+          filters:
+            - RewritePath=/docs/auth/(?<segment>.*), /${segment}
+            - SwaggerServersRewrite
+          metadata:
+            public: true
+
+        # Public Routes (No Authentication Required)
+        - id: auth-public-register
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/register
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+
+        - id: auth-public-login
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/login
+            - Method=POST
+          filters:
+            - StripPrefix=1
+          metadata:
+            public: true
+
+        # Protected Routes
+        - id: op-stack-service
+          uri: ${gateway.services.op-stack-service.url}
+          predicates:
+            - Path=/api/service/**
+          metadata:
+            public: false
+            service: op-stack-service
+
+        - id: op-stack-executor
+          uri: ${gateway.services.op-stack-executor.url}
+          predicates:
+            - Path=/api/executor/**
+          metadata:
+            public: false
+            service: op-stack-executor
+
+        - id: op-stack-tools
+          uri: ${gateway.services.op-stack-tools.url}
+          predicates:
+            - Path=/api/tools/**
+          metadata:
+            public: false
+            service: op-stack-tools
+
+        - id: op-stack-auth-protected
+          uri: ${gateway.services.op-stack-auth.url}
+          predicates:
+            - Path=/api/auth/**
+          metadata:
+            public: false
+            service: op-stack-auth
+
+# Security 配置
+security:
+  jwt:
+    secret: ${JWT_SECRET:docker-secret-key-for-jwt-token-must-be-at-least-256-bits-long-for-hmac-sha256}
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.catface996.gateway: INFO
